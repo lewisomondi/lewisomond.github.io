@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Test Platform</title>
+    <style>
+        /* Styles as provided in the original code */
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Online Test Platform</h1>
+    </header>
+    <main>
+        <section id="login">
+            <h2>Login</h2>
+            <form id="loginForm">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+                <button type="submit">Login</button>
+            </form>
+            <p>Don't have an account? <a href="#register">Register here</a></p>
+        </section>
+        <section id="register">
+            <h2>Register</h2>
+            <form id="registerForm">
+                <label for="newUsername">Username:</label>
+                <input type="text" id="newUsername" name="newUsername" required>
+                <label for="newPassword">Password:</label>
+                <input type="password" id="newPassword" name="newPassword" required>
+                <button type="submit">Register</button>
+            </form>
+        </section>
+        <section id="test" style="display: none;">
+            <h2>Test</h2>
+            <form id="testForm">
+                <div id="question"></div>
+                <button type="button" onclick="submitAnswer()">Submit</button>
+            </form>
+            <div id="timer">Time remaining: 1:00:00</div>
+        </section>
+        <section id="result" style="display: none;">
+            <h2>Result</h2>
+            <p id="score"></p>
+            <div id="incorrectQuestions"></div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2024 Online Test Platform</p>
+    </footer>
+
+    <script>
+        // Global variables to track current question, score, and total score
+        var currentQuestion = 0;
+        var score = 0;
+        var totalScore = 0;
+        var timeLimit = 3600; // 1 hour in seconds
+        var timerInterval;
+
+        // Function to start the timer
+        function startTimer() {
+            var timerElement = document.getElementById("timer");
+
+            timerInterval = setInterval(function() {
+                var hours = Math.floor(timeLimit / 3600);
+                var minutes = Math.floor((timeLimit % 3600) / 60);
+                var seconds = timeLimit % 60;
+
+                timerElement.textContent = "Time remaining: " + hours + ":" + minutes + ":" + seconds;
+
+                if (timeLimit <= 0) {
+                    clearInterval(timerInterval);
+                    displayResult();
+                } else {
+                    timeLimit--;
+                }
+            }, 1000);
+        }
+
+        // Array of questions and answers
+        var questions = [
+            {
+                prompt: "1. What is the difference between AND and OR gates?",
+                options: ["A. AND gate adds inputs, OR gate multiplies inputs",
+                          "B. AND gate outputs true if both inputs are true, OR gate outputs true if at least one input is true",
+                          "C. AND gate is used for subtraction, OR gate for addition",
+                          "D. AND gate is used for multiplication, OR gate for division"],
+                answer: "B"
+            },
+            {
+                prompt: "2. What is the binary representation of the decimal number 27?",
+                options: ["A. 11010", "B. 10011", "C. 11100", "D. 10101"],
+                answer: "B"
+            },
+            {
+                prompt: "3. What is the result of the binary addition: 1011 + 0101?",
+                options: ["A. 11000", "B. 11110", "C. 10000", "D. 11100"],
+                answer: "D"
+            },
+            {
+                prompt: "4. Convert the hexadecimal number A5 to binary.",
+                options: ["A. 10100101", "B. 11001010", "C. 10010101", "D. 10101010"],
+                answer: "A"
+            },
+            {
+                prompt: "5. What is the purpose of Karnaugh maps in logic minimization?",
+                options: ["A. To simplify complex Boolean expressions",
+                          "B. To maximize logic circuit complexity",
+                          "C. To minimize the number of logic gates",
+                          "D. To generate truth tables"],
+                answer: "C"
+            },
+            {
+                prompt: "6. What is the function of a 555 timer?",
+                options: ["A. It counts binary digits",
+                          "B. It generates pulses and oscillations",
+                          "C. It performs arithmetic operations",
+                          "D. It converts analog signals to digital signals"],
+                answer: "B"
+            },
+            {
+                prompt: "7. How does a DAC differ from an ADC?",
+                options: ["A. DAC converts digital to analog, ADC converts analog to digital",
+                          "B. DAC amplifies signals, ADC attenuates signals",
+                          "C. DAC works in reverse to ADC",
+                          "D. DAC is used in digital circuits, ADC in analog circuits"],
+                answer: "A"
+            },
+            {
+                prompt: "8. How do DRAM and SRAM memories work?",
+                options: ["A. DRAM is volatile, SRAM is non-volatile",
+                          "B. DRAM uses capacitors to store data, SRAM uses flip-flops",
+                          "C. DRAM is faster than SRAM",
+                          "D. DRAM has higher power consumption than SRAM"],
+                answer: "B"
+            },
+            {
+                prompt: "9. What are the advantages of using flip-flops in digital circuits?",
+                options: ["A. Low power consumption and high speed",
+                          "B. High complexity and low cost",
+                          "C. Easy to interface with analog circuits",
+                          "D. Limited functionality and high latency"],
+                answer: "A"
+            },
+            {
+                prompt: "10. What is the basic operation of a ring counter?",
+                options: ["A. It counts in a circular sequence",
+                          "B. It performs arithmetic operations",
+                          "C. It stores data in a ring structure",
+                          "D. It converts analog signals to digital signals"],
+                answer: "A"
+            },
+            {
+                prompt: "11. How can exclusive-OR (XOR) function be implemented using only NAND gates?",
+                options: ["A. By connecting NAND gates in series",
+                          "B. By using NAND gates as inverters",
+                          "C. By combining NAND gates in a specific configuration",
+                          "D. It cannot be implemented using NAND gates"],
+                answer: "C"
+            },
+            {
+                prompt: "12. What is metastability in flip-flops?",
+                options: ["A. Stability of the output",
+                          "B. Oscillation between two states",
+                          "C. Unstable state between 0 and 1",
+                          "D. Resistance to external noise"],
+                answer: "C"
+            },
+            {
+                prompt: "13. What are the main differences between CMOS and bipolar transistor logic families?",
+                options: ["A. Speed and power consumption",
+                          "B. Voltage levels and complexity",
+                          "C. Size and cost",
+                          "D. Operating temperature range"],
+                answer: "A"
+            },
+            {
+                prompt: "14. What are the key features of Field-Programmable Gate Arrays (FPGAs)?",
+                options: ["A. Fixed logic configuration and low cost",
+                          "B. Limited functionality and high power consumption",
+                          "C. Reconfigurable logic and parallel processing",
+                          "D. Slow operation and small size"],
+                answer: "C"
+            },
+            {
+                prompt: "15. What is an analog signal?",
+                options: ["A. A continuous signal with infinite possible values",
+                          "B. A discrete signal with finite possible values",
+                          "C. A signal with only two possible states",
+                          "D. A signal used in digital circuits"],
+                answer: "A"
+            },
+            {
+                prompt: "16. How does a digital signal differ from an analog signal?",
+                options: ["A. Digital signals are continuous, analog signals are discrete",
+                          "B. Digital signals use binary code, analog signals use continuous voltage levels",
+                          "C. Digital signals are faster, analog signals are slower",
+                          "D. Digital signals cannot be transmitted wirelessly, analog signals can"],
+                answer: "B"
+            },
+            {
+                prompt: "17. Which of the following truth tables represents an OR gate?",
+                options: ["A. 0 0 -> 0, 0 1 -> 1, 1 0 -> 1, 1 1 -> 1",
+                          "B. 0 0 -> 0, 0 1 -> 0, 1 0 -> 0, 1 1 -> 1",
+                          "C. 0 0 -> 0, 0 1 -> 1, 1 0 -> 1, 1 1 -> 0",
+                          "D. 0 0 -> 1, 0 1 -> 1, 1 0 -> 1, 1 1 -> 0"],
+                answer: "A"
+            },
+            {
+                prompt: "18. What is the logic symbol for a NOT gate?",
+                options: ["A. &",
+                          "B. |",
+                          "C. !",
+                          "D. ⊕"],
+                answer: "C"
+            },
+            {
+                prompt: "19. Which of the following represents a logic circuit that outputs 0 only when both inputs A and B are 1?",
+                options: ["A. AND gate",
+                          "B. OR gate",
+                          "C. XOR gate",
+                          "D. NAND gate"],
+                answer: "D"
+            },
+            {
+                prompt: "20. What is the simplified form of the Boolean expression A' + B using De Morgan's Law?",
+                options: ["A. A + B'",
+                          "B. (A' + B)'",
+                          "C. (A'B)'",
+                          "D. (AB')'"],
+                answer: "B"
+            },
+            {
+                prompt: "21. Express the logic function 'Output = 1 only when A and B are different' using basic Boolean operators.",
+                options: ["A. A XOR B",
+                          "B. A OR B",
+                          "C. A AND B",
+                          "D. A NAND B"],
+                answer: "A"
+            },
+            {
+                prompt: "22. What is a multiplexer?",
+                options: ["A. A device used to combine multiple signals into one",
+                          "B. A device used to amplify signals",
+                          "C. A device used to convert analog signals to digital signals",
+                          "D. A device used to decode binary numbers"],
+                answer: "A"
+            },
+            {
+                prompt: "23. How can a 4:1 multiplexer be used to implement any two-input logic function?",
+                options: ["A. By connecting multiple multiplexers in series",
+                          "B. By using combinational logic circuits",
+                          "C. By connecting the select lines appropriately",
+                          "D. It cannot implement any two-input logic function"],
+                answer: "C"
+            },
+            {
+                prompt: "24. Which of the following best describes the triggering condition of an SR flip-flop?",
+                options: ["A. Positive edge-triggered",
+                          "B. Negative edge-triggered",
+                          "C. Level-triggered",
+                          "D. Asynchronous"],
+                answer: "C"
+            },
+            {
+                prompt: "25. What is the primary function of a shift register?",
+                options: ["A. To store data temporarily",
+                          "B. To perform arithmetic operations",
+                          "C. To amplify digital signals",
+                          "D. To convert analog signals to digital signals"],
+                answer: "A"
+            },
+            {
+                prompt: "26. In a 3-bit synchronous counter, how many flip-flops are typically used?",
+                options: ["A. 1",
+                          "B. 2",
+                          "C. 3",
+                          "D. 4"],
+                answer: "C"
+            },
+            {
+                prompt: "27. Which of the following statements is true regarding the JK flip-flop's truth table?",
+                options: ["A. It has only one stable state",
+                          "B. It has two stable states",
+                          "C. It has three stable states",
+                          "D. It has four stable states"],
+                answer: "B"
+            },
+            {
+                prompt: "28. What is the main difference between a serial-in/parallel-out (SIPO) and a parallel-in/serial-out (PISO) shift register?",
+                options: ["A. SIPO can shift data in both directions, while PISO can only shift data in one direction.",
+                          "B. SIPO requires fewer clock cycles to shift data compared to PISO.",
+                          "C. SIPO can load data in parallel and output it serially, while PISO can load data serially and output it in parallel.",
+                          "D. SIPO has more storage capacity than PISO."],
+                answer: "C"
+            },
+            {
+                prompt: "29. What is the modulus of a counter?",
+                options: ["A. The maximum number of clock pulses it can count",
+                          "B. The minimum number of clock pulses it can count",
+                          "C. The number of flip-flops used in the counter",
+                          "D. The frequency at which the counter operates"],
+                answer: "A"
+            },
+            {
+                prompt: "30. Which additional logic gate is commonly used with D flip-flops to create a T flip-flop?",
+                options: ["A. AND gate",
+                          "B. OR gate",
+                          "C. XOR gate",
+                          "D. NOT gate"],
+                answer: "C"
+            }
+        ];
+
+        // Function to display the current question
+        function displayQuestion() {
+            var questionElement = document.getElementById("question");
+            questionElement.innerHTML = "<p>" + questions[currentQuestion].prompt + "</p>";
+            for (var i = 0; i < questions[currentQuestion].options.length; i++) {
+                questionElement.innerHTML += "<input type='radio' id='option" + i + "' name='answer' value='" + questions[currentQuestion].options[i][0] + "'>";
+                questionElement.innerHTML += "<label for='option" + i + "'>" + questions[currentQuestion].options[i] + "</label><br>";
+            }
+        }
+
+        // Function to submit an answer
+        function submitAnswer() {
+            var selectedOption = document.querySelector('input[name="answer"]:checked');
+            if (selectedOption) {
+                // Compare the selected option with the correct answer
+                if (questions[currentQuestion].answer === selectedOption.value) {
+                    score++; // Increment score if the answer is correct
+                }
+                currentQuestion++; // Move to the next question
+                if (currentQuestion < questions.length) {
+                    displayQuestion(); // Display the next question
+                } else {
+                    displayResult(); // Display the result if all questions are answered
+                }
+            } else {
+                alert("Please select an option."); // Alert if no option is selected
+            }
+        }
+
+        // Function to display the result
+        function displayResult() {
+            totalScore = score;
+            clearInterval(timerInterval); // Stop the timer
+            var resultSection = document.getElementById("result");
+            var scoreDisplay = document.getElementById("score");
+            scoreDisplay.textContent = "Your score: " + score + "/" + questions.length; // Display the total score
+
+            if (totalScore >= 15) {
+                alert("Congratulations! You have passed the test.");
+            } else {
+                alert("Unfortunately, you have not passed the test. Please try again.");
+            }
+
+            // Display incorrect questions
+            var incorrectQuestions = document.getElementById("incorrectQuestions");
+            for (var i = 0; i < questions.length; i++) {
+                if (questions[i].answer !== document.querySelector('input[name="answer"]:checked').value) {
+                    incorrectQuestions.innerHTML += "<p>" + questions[i].prompt + "</p>";
+                }
+            }
+
+            document.getElementById("test").style.display = "none";
+            resultSection.style.display = "block";
+        }
+
+        // Event listener for registration form submission
+        document.getElementById("registerForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent default form submission
+            var newUsername = document.getElementById("newUsername").value; // Get new username
+            var newPassword = document.getElementById("newPassword").value; // Get new password
+            // You can add code here to store the new user's information
+            alert("User registered successfully!\nUsername: " + newUsername + "\nPassword: " + newPassword);
+            // Clear the form fields after registration
+            document.getElementById("newUsername").value = "";
+            document.getElementById("newPassword").value = "";
+        });
+
+        // Event listener for login form submission
+        document.getElementById("loginForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent default form submission
+            var username = document.getElementById("username").value; // Get username
+            var password = document.getElementById("password").value; // Get password
+            // Directly proceed to the test section
+            alert("Welcome " + username + "! Attempt the following questions.");
+            document.getElementById("login").style.display = "none";
+            document.getElementById("test").style.display = "block";
+            displayQuestion();
+            startTimer(); // Start the timer
+        });
+
+    </script>
+</body>
+</html>
